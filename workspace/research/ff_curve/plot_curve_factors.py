@@ -13,7 +13,7 @@ Fits the full sample and CPI, FOMC, NFP, and PCE event-date subsets separately.
 Event dates are used as supplied, including both days of multi-day FOMC meetings
 if present in the source; dates are not shifted to another trading day.
 Level, slope, and curvature are possible loading shapes, not imposed factors.
-Displays plots only; does not write data, figures, or reports.
+Displays plots and saves PNG figures to outputs/ff_curve.
 """
 
 from pathlib import Path
@@ -24,6 +24,7 @@ import pandas as pd
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "ff_curve"
 DATA_FILE = PROJECT_ROOT / "data" / "ohlcv" / "ZQ_2010-06-07_2026-10-21.csv"
 TENORS = [f"ZQ_T{month}" for month in range(7)]
 FIELDS = ["open", "high", "low", "close"]
@@ -141,6 +142,9 @@ def plot_sample(sample: str, movements: dict[str, pd.DataFrame]) -> None:
     axes[0].set_ylabel("PCA loading (unit eigenvector)")
     fig.suptitle(f"Fed funds futures curve — {sample}\n"
                  "PCA of daily rate movements (sample p5–p95 winsorized)")
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"ff_curve_pca_{sample.lower().replace(' ', '_')}.png"
+    fig.savefig(OUTPUT_DIR / filename, dpi=200, bbox_inches="tight")
 
 
 def main() -> None:

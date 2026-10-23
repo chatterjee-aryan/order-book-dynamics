@@ -26,5 +26,4 @@ Reference code is at workspace/data_processing/get_futures_ohlcv_data.py and wor
     - data/event/nfp_dates.csv
     - data/event/pce_dates.csv
 So go through data file, pick only the dates in one of these meeting dates and then do PCA again. Please print out number of observations/dates too. Do this for each meeting type separately.
-6. That is it. This is mainly a plotting excercise.
-
+7. Show all figures and save each as a PNG in outputs/ff_curve. Use ff_curve_pca_all_dates.png for the full sample and ff_curve_pca_<event>_dates.png for each event type (lowercase cpi, fomc, nfp, pce). Create the directory if needed and overwrite the corresponding figures on subsequent runs.
