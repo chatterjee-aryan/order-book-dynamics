@@ -1,0 +1,251 @@
+% Instruction file: workspace/instructions/presentation_oct_23.md
+% Build from any directory: bash presentations/build_oct_23.sh
+\documentclass[aspectratio=169,10pt]{beamer}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+% Standard Beamer theme; colors verified against databento.com CSS.
+\usetheme{Madrid}
+\definecolor{databentopurple}{HTML}{6266E5}
+\definecolor{databentocharcoal}{HTML}{323348}
+\setbeamercolor{structure}{fg=databentopurple}
+\setbeamercolor{normal text}{fg=databentocharcoal,bg=white}
+\setbeamercolor{palette primary}{fg=white,bg=databentopurple}
+\setbeamercolor{palette secondary}{fg=white,bg=databentopurple!80!black}
+\setbeamercolor{palette tertiary}{fg=white,bg=databentocharcoal}
+\setbeamercolor{frametitle}{fg=white,bg=databentopurple}
+\setbeamercolor{title}{fg=white,bg=databentopurple}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\title{P116: Order Book Dynamics\\Around Major Events}
+\author{}
+\date{}
+% Search both repository-root and presentations-directory working directories.
+\graphicspath{{outputs/}{../outputs/}}
+\newcommand{\chart}[2]{\begin{center}\includegraphics[width=\linewidth,height=#2,keepaspectratio]{#1}\end{center}}
+\newcommand{\takeaway}[1]{{\small\textbf{Observation:} #1}}
+\begin{document}
+
+% 1
+\begin{frame}[plain]
+\centering
+\titlepage
+\end{frame}
+
+% 2
+\begin{frame}{Progress and discussion agenda}
+\begin{enumerate}
+\item \textbf{Progress to date}
+  \begin{itemize}
+  \item Explore the platform and establish the data workflow
+  \item Select assets and macroeconomic announcements
+  \item Collect daily futures data and define contract selection
+  \item Compare daily moves on announcement and normal days
+  \end{itemize}
+\item \textbf{Next research steps}
+  \begin{itemize}
+  \item Analyse intraday dynamics using market-by-order (MBO) data
+  \item Discuss a dashboard for monitoring market conditions
+  \end{itemize}
+\end{enumerate}
+\end{frame}
+
+% 3
+\begin{frame}{Asset universe}
+\small
+Futures offer liquid benchmark exposures, long trading hours and a common exchange data source.
+\medskip
+{\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.23\linewidth}>{\raggedright\arraybackslash}X@{}}
+\textcolor{databentopurple}{ZQ: Fed funds} & Current calendar month and next six months; expected average overnight rates and policy-path repricing. \\
+\textcolor{databentopurple}{ZT: 2-year Treasury} & Short-rate expectations and demand for safe assets. \\
+\textcolor{databentopurple}{ZN: 10-year Treasury} & Longer-run rate expectations and term premium; complements ZT in studying the curve. \\
+\textcolor{databentopurple}{GC: Gold} & Responses to real rates, the dollar and demand for safe assets. \\
+\textcolor{databentopurple}{6E: EUR/USD} & Dollar-relative currency response; higher prices mean a stronger euro. \\
+\textcolor{databentopurple}{ES: S\&P 500} & Equity responses to rates, earnings expectations and growth news. \\
+\textcolor{databentopurple}{BTC: Bitcoin} & Compare a newer asset's response with established markets.
+\end{tabularx}}
+\medskip
+
+All contracts are available through Databento's \texttt{GLBX.MDP3} dataset.
+\end{frame}
+
+% 4
+\begin{frame}{Daily data and contract selection}
+\begin{itemize}
+\item Retrieve explicit futures contracts using Databento's \texttt{ohlcv-1d} schema.
+\item \textbf{Fed funds:} retain seven calendar-month horizons, T0--T6, on each date.
+\item \textbf{Other assets:} retain two nearby contracts and mark one as primary.
+\item Switch primary when the challenger accounts for \textbf{at least 65\% of their combined volume for three consecutive trading observations}.
+\item If only one contract has a bar, use that contract immediately; if neither has a bar, neither is primary.
+\item Compute each open-to-close return within one contract. No return is calculated across a roll-price gap.
+\end{itemize}
+\end{frame}
+
+% 5
+\begin{frame}{Daily analysis before the intraday study}
+\small
+\textbf{Coverage:} June 2010--October 2026; Bitcoin has a shorter history.
+Events: FOMC, CPI, nonfarm payrolls (NFP), and PCE releases.
+
+\textbf{Time window:} bars span midnight to midnight UTC, crossing CME session boundaries. Intraday research will align observations to release timestamps.
+\begin{enumerate}
+\item \textbf{Same-day correlations:} compare signed open-to-close moves across assets and event samples.
+\item \textbf{Lag-one autocorrelation:} correlate today's move with the next observed trading day's move; condition on the first day being an event.
+\item \textbf{Range intensity:} divide today's high--low range by its preceding 60-trading-date mean, excluding today.
+\end{enumerate}
+FF uses PCA of seven rate changes or ranges. Other signed returns are \((C-O)/O\). Normal days exclude all four event categories.
+\end{frame}
+
+% 6
+\begin{frame}{Fed funds curve PCA}
+\chart{ff_curve/ff_curve_pca_all_dates.png}{0.61\textheight}
+\small
+Covariance PCA: demean each maturity after p5--p95 winsorization; no scaling by maturity standard deviation. Eigenvectors have unit length.
+
+\takeaway{PC1 is a ramp rather than a parallel shift. Further horizons carry more movement variance; current-month averaging may also suppress the front end.}
+\end{frame}
+
+% 7
+\begin{frame}{Cross-asset correlations: all dates}
+\chart{daily/open_close_correlations_all_dates.png}{0.68\textheight}
+\takeaway{The rates group is strongly linked: ZT--ZN = 0.80; FF rate-change PC1--ZT = \(-0.78\). All dates include event days.}
+\end{frame}
+
+% 8
+\begin{frame}{Cross-asset correlations: FOMC dates}
+\chart{daily/open_close_correlations_fomc_dates.png}{0.68\textheight}
+\takeaway{Several relationships strengthen: BTC--ES 0.34 to 0.63; gold--EUR 0.33 to 0.61; BTC--EUR 0.12 to 0.42. BTC pairs have 72 FOMC observations.}
+\end{frame}
+
+% 9
+\begin{frame}{Cross-asset correlations: CPI dates}
+\chart{daily/open_close_correlations_cpi_dates.png}{0.68\textheight}
+\takeaway{FF PC1--ZT = \(-0.87\); gold--EUR = 0.44 and BTC--ES = 0.39. The FOMC pattern is not shared uniformly across releases.}
+\end{frame}
+
+% 10
+\begin{frame}{Cross-asset correlations: NFP dates}
+\chart{daily/open_close_correlations_nfp_dates.png}{0.68\textheight}
+\takeaway{Strong links span rates, gold and FX: ZN--gold = 0.58 and gold--EUR = 0.56. BTC--ES = 0.32, close to its full-sample value.}
+\end{frame}
+
+% 11
+\begin{frame}{Lag-one autocorrelation of daily moves}
+\begin{columns}[c]
+\begin{column}{0.69\textwidth}
+\chart{daily/open_close_lag1_autocorrelations.png}{0.76\textheight}
+\end{column}
+\begin{column}{0.28\textwidth}
+\small
+\textbf{Compare:} day \(t\) open-to-close with day \(t+1\) open-to-close.
+
+Select samples by day \(t\); day \(t+1\) may be any event category.
+
+\textbf{Gold stands out:} FOMC \(\rho=0.33\), versus \(-0.04\) on normal days.
+
+Positive values indicate linear continuation relative to sample means, not a guaranteed repeated sign.
+
+FF uses a common full-sample PC1 basis directly, without differencing PC1 again.
+\end{column}
+\end{columns}
+\end{frame}
+
+% 12
+\begin{frame}{Daily range intensity: FOMC dates}
+\chart{daily/daily_vol_fomc_vs_normal.png}{0.66\textheight}
+\small
+\(I_t=R_t / \operatorname{mean}(R_{t-60},\ldots,R_{t-1})\).
+For FF, \(R_t\) is the uncentered projection of clipped seven-horizon ranges onto range-PC1 loadings.
+
+\takeaway{The largest median increases are in FF and ZT. BTC shows little range expansion despite stronger equity co-movement. This is a range proxy, not a standard-deviation estimate.}
+\end{frame}
+
+% 13
+\begin{frame}{Daily range intensity: CPI dates}
+\chart{daily/daily_vol_cpi_vs_normal.png}{0.70\textheight}
+\takeaway{Rate futures show elevated median ranges. Gold, ES and BTC medians are near their trailing means, but their upper quartiles exceed normal-day levels.}
+\end{frame}
+
+% 14
+\begin{frame}{Daily range intensity: NFP dates}
+\chart{daily/daily_vol_nfp_vs_normal.png}{0.70\textheight}
+\small
+Compare the median and upper quartile with normal days, using the same preceding 60-date baseline. A value of 1 means today's range equals its trailing mean.
+\end{frame}
+
+% 15
+\begin{frame}{Proposed intraday research}
+\begin{columns}[t]
+\begin{column}{0.32\textwidth}
+\textbf{Liquidity}
+\begin{itemize}
+\item Bid--ask spread
+\item Depth at level \(k\)
+\item Order additions and cancellations by level
+\end{itemize}
+\end{column}
+\begin{column}{0.30\textwidth}
+\textbf{Order flow}
+\begin{itemize}
+\item Total traded volume
+\item Signed trade flow
+\item Arrival and cancellation rates
+\end{itemize}
+\end{column}
+\begin{column}{0.30\textwidth}
+\textbf{Prices}
+\begin{itemize}
+\item Returns around release time
+\item Exponentially weighted volatility
+\item Price impact of order flow
+\end{itemize}
+\end{column}
+\end{columns}
+\vspace{8mm}
+These are proposals for discussion; prioritisation will depend on data coverage and reconstruction cost.
+\end{frame}
+
+% 16
+\begin{frame}{Study design and key metrics}
+\begin{enumerate}
+\item \textbf{Event-aligned trajectories}
+\begin{itemize}
+\item Compare pre- and post-release features with normal days at matching times.
+\item Measure time to peak or trough and time to stabilisation.
+\item Compare recovery speeds across assets and announcement types.
+\end{itemize}
+\item \textbf{Information flow across markets}
+\begin{itemize}
+\item Study lead--lag relationships in prices, order flow and liquidity.
+\item Does EUR futures order flow precede gold returns or gold order flow?
+\item Does liquidity withdrawal in one market precede withdrawal elsewhere?
+\item Explore event-specific flow hierarchies: which markets lead, which follow, and whether that ordering differs across announcements.
+\end{itemize}
+\end{enumerate}
+\small
+Check clock alignment, influential days and stability across periods before interpreting apparent leads as predictive relationships.
+\end{frame}
+
+% 17
+\begin{frame}{Dashboard proposal}
+\begin{itemize}
+\item Monitor spreads, depth, signed order flow and price volatility across the chosen markets.
+\item Compare current conditions with historical event and normal-day patterns.
+\item Condition reference trajectories on the release type and elapsed time since the announcement.
+\item Explore expected time to normalisation, with updates as observations arrive.
+\end{itemize}
+\vspace{5mm}
+\textbf{Scope for discussion:} prioritise the empirical intraday study; build a dashboard if time and live-data access permit.
+
+\textbf{Feedback welcome:} which assets, features and event comparisons should come first?
+\end{frame}
+
+% 18
+\begin{frame}[plain]
+\centering
+{\usebeamerfont{title}\color{databentopurple} Thank you}
+\end{frame}
+\end{document}
